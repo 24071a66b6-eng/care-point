@@ -4,6 +4,7 @@
   const toastRegion = document.getElementById('toast-region');
   const state = {
     user: null,
+    publicDemo: false,
     page: 'dashboard',
     patients: [],
     patient: null,
@@ -105,7 +106,7 @@
         <div class="patient-list" id="patient-quick-list"></div>
         <div class="sidebar-bottom">
           <div class="demo-note"><strong>Demonstration only</strong><br>All records and measurements are fictional. Not for real patient care.</div>
-          <div class="user-mini"><span class="avatar" id="user-avatar">CP</span><span><strong id="user-name">CarePoint staff</strong><small>Workspace account</small></span><button type="button" aria-label="Sign out" data-action="logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></div>
+          <div class="user-mini" id="user-mini"><span class="avatar" id="user-avatar">CP</span><span><strong id="user-name">CarePoint staff</strong><small id="user-role">Workspace account</small></span><button type="button" aria-label="Sign out" data-action="logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></div>
         </div>
       </aside>
       <main class="main">
@@ -119,6 +120,10 @@
             <div class="notification-wrap"><button type="button" class="icon-button" aria-label="Notifications" aria-expanded="false" data-action="toggle-notifications"><i class="fa-regular fa-bell"></i><span id="notification-count"></span></button><div id="notification-menu"></div></div>
           </div>
         </header>
+        <div class="public-demo-banner" id="public-demo-banner" role="status" hidden>
+          <strong>Public demo — fictional data only.</strong>
+          Anyone with this link can view, add, edit, or delete shared demo records. Do not enter real or sensitive information.
+        </div>
         <div class="content" id="content" tabindex="-1"></div>
       </main>`;
     appRoot.replaceChildren(shell);
@@ -161,6 +166,9 @@
     document.getElementById('current-date').textContent = localDate(new Date(), { weekday: 'short', month: 'short', day: 'numeric' });
     document.getElementById('user-name').textContent = state.user?.name || 'CarePoint staff';
     document.getElementById('user-avatar').textContent = initials(state.user?.name || 'CP');
+    document.getElementById('user-role').textContent = state.publicDemo ? 'Shared public demo' : 'Workspace account';
+    document.getElementById('user-mini').classList.toggle('public-demo-user', state.publicDemo);
+    document.getElementById('public-demo-banner').hidden = !state.publicDemo;
     document.getElementById('page-title').textContent = titleFor(state.page);
     const nav = document.getElementById('nav-list');
     nav.replaceChildren(...navItems.map(([key, fa, label]) => {
@@ -600,6 +608,13 @@
   }
 
   async function bootstrap() {
+    const config = await api.get('/config');
+    state.publicDemo = config.data.publicDemo;
+    if (state.publicDemo) {
+      sessionStorage.removeItem(api.tokenKey);
+      state.user = { name: 'Public demo visitor', role: 'demo' };
+      return loadAll();
+    }
     if (!sessionStorage.getItem(api.tokenKey)) return renderLogin();
     try {
       const response = await api.get('/auth/me');

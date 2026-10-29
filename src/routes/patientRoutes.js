@@ -46,7 +46,7 @@ router.get('/', [
   res.json(pageResult(items, total, page, limit));
 }));
 
-router.post('/', requireRole('admin', 'clinician'), [...patientFields, validateRequest], asyncHandler(async (req, res) => {
+router.post('/', requireRole('admin', 'clinician', 'demo'), [...patientFields, validateRequest], asyncHandler(async (req, res) => {
   const patient = await Patient.create(req.body);
   res.status(201).json({ data: patient });
 }));
@@ -77,7 +77,7 @@ router.patch('/:id', [
   res.json({ data: patient });
 }));
 
-router.delete('/:id', requireRole('admin'), [param('id').isMongoId(), validateRequest], asyncHandler(async (req, res) => {
+router.delete('/:id', requireRole('admin', 'demo'), [param('id').isMongoId(), validateRequest], asyncHandler(async (req, res) => {
   const patient = await requireRecord(Patient, req.params.id, 'Patient');
   await Promise.all([
     Diagnosis.deleteMany({ patient: patient._id }),

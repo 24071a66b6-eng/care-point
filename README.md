@@ -62,6 +62,7 @@ Edit `.env`. Use a unique random JWT secret of at least 32 characters and a stro
 | `MONGODB_URI` | Yes | Local MongoDB or Atlas connection string. |
 | `JWT_SECRET` | Yes | Random signing key of at least 32 characters. |
 | `JWT_EXPIRES_IN` | No | Token lifetime; defaults to `8h`. |
+| `PUBLIC_DEMO_MODE` | No | Defaults to `false`. Setting exactly `true` enables anonymous access and write access to shared records. Only use with a dedicated database containing fictional demo data. |
 | `INITIAL_ADMIN_EMAIL` | For seeding | Email for the initial administrator account. |
 | `INITIAL_ADMIN_PASSWORD` | For seeding | Initial password; at least 12 characters. |
 
@@ -73,6 +74,7 @@ NODE_ENV=development
 MONGODB_URI=mongodb://127.0.0.1:27017/carepoint_dashboard
 JWT_SECRET=replace_with_a_long_random_secret_at_least_32_characters
 JWT_EXPIRES_IN=8h
+PUBLIC_DEMO_MODE=false
 INITIAL_ADMIN_EMAIL=admin@example.test
 INITIAL_ADMIN_PASSWORD=replace_with_a_unique_password
 ```
@@ -90,11 +92,14 @@ npm run dev
 
 Open `http://localhost:3000`. Sign in with `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` from `.env`. For a normal production process use `npm start`.
 
+For an intentionally public, no-login demo, set `PUBLIC_DEMO_MODE=true` only when connected to a dedicated database containing fictional records. This grants anonymous visitors access to the shared data and lets them add, edit, and delete records. The API rate-limits writes, but that is not access control; do not enable this mode on a database containing real or private data. The interface displays this warning while public demo mode is enabled.
+
 ## Authentication and authorization
 
 - `POST /api/auth/login` issues a signed bearer token; `GET /api/auth/me` validates it.
 - The browser keeps the token in `sessionStorage` for the current tab. Sign out removes it. A token stored this way is accessible to same-origin JavaScript; this demo has no independent security assessment.
-- Passwords are bcrypt-hashed. Login requests are rate limited. API routes (except health and login) require an authenticated bearer token.
+- Passwords are bcrypt-hashed. Login requests are rate limited. By default, API routes (except health, config, and login) require an authenticated bearer token.
+- Optional `PUBLIC_DEMO_MODE=true` intentionally bypasses sign-in for application APIs, grants the visitor demo-role create/edit/delete actions, and rate-limits writes. This is only for a public demonstration backed by fictional data; anyone can read and modify shared records.
 - The `admin`, `clinician`, and `staff` roles are included in the token. Admins can manage the care-team roster and delete patients; admins and clinicians can create patient profiles. All signed-in roles can view records and perform the operations permitted to their role. The seed process provisions the initial admin; there is no public registration or role-management UI.
 - Every authorized staff account can access the same fictional patient dataset. There is no patient ownership, organization tenancy, audit-grade access tracking, CSRF/session-cookie architecture, or real-time delivery.
 
@@ -148,14 +153,14 @@ npm test
 npm run check
 ```
 
-The API tests use an isolated in-memory MongoDB instance, not a configured production database. MongoDB Memory Server may need to download its compatible MongoDB binary on its first run. The test suite covers health and disconnected health states, authentication, unknown routes, patient search/missing/invalid records, appointment persistence/conflicts, team validation, message validation, and summary counts. Browser automation, cross-device visual inspection, Atlas connectivity, and a production deployment are not part of the automated test suite.
+The API tests use an isolated in-memory MongoDB instance, not a configured production database. MongoDB Memory Server may need to download its compatible MongoDB binary on its first run. The test suite covers health and disconnected health states, authenticated and public-demo access behavior, unknown routes, patient search/missing/invalid records, appointment persistence/conflicts, team validation, message validation, and summary counts. Browser automation, cross-device visual inspection, Atlas connectivity, and a production deployment are not part of the automated test suite.
 
 ## Deployment (Render + MongoDB Atlas)
 
 1. Create a MongoDB Atlas cluster and a database user with only the permissions needed for this app. Restrict Atlas network access to the hosting provider's outbound addresses where available; do not use unrestricted access for a real deployment.
 2. Push this project to a private or public Git repository. Do not include `.env`.
 3. In Render, choose **New → Blueprint**, connect the repository, and let Render read [`render.yaml`](./render.yaml). The blueprint creates the `care-point` web service, installs with `npm ci`, starts with `npm start`, and uses `/api/health` for health checks. Alternatively, create a Web Service manually with those build/start/health-check settings.
-4. In the Render service's Environment settings, supply `MONGODB_URI`, `INITIAL_ADMIN_EMAIL`, and `INITIAL_ADMIN_PASSWORD`. Render generates `JWT_SECRET` from the Blueprint. Do not paste credentials into source files or commit them. The hosting platform provides `PORT`.
+4. In the Render service's Environment settings, supply `MONGODB_URI`, `INITIAL_ADMIN_EMAIL`, and `INITIAL_ADMIN_PASSWORD`. Render generates `JWT_SECRET` from the Blueprint. `PUBLIC_DEMO_MODE` defaults to `false`; leave it disabled until the Atlas database is confirmed to contain only fictional demonstration records. To make the demo link open without sign-in, set it to `true` in the Render Environment page and save/redeploy after that check. Do not paste credentials into source files or commit them. The hosting platform provides `PORT`.
 5. Before using the deployed app, seed Atlas from your local machine: copy `.env.example` to `.env`, set `MONGODB_URI` to the same Atlas database URI, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` to the values configured in Render, then run `npm run seed`. The seeder resets the configured admin password and replaces its named demo records each time it runs. Keep `.env` local and uncommitted.
 6. Confirm `/api/health` returns HTTP 200 and `{"data":{"status":"ok","database":"connected"}}`, then verify sign-in and core workflows. Never enter real patient information.
 
@@ -167,7 +172,7 @@ The Express service serves the frontend from `public/`; browser API calls use sa
 
 - Not certified, not HIPAA-compliant, and not intended for any real patient care or real health records.
 - Demonstration vitals/labs are generated fictional values; the app makes no medical diagnoses or treatment recommendations.
-- Authentication is suitable for a classroom demonstration only. No account recovery, registration, MFA, configurable token revocation, per-record authorization, multi-tenant isolation, production security assessment, or compliance controls are implemented.
+- Authentication is suitable for a classroom demonstration only. No account recovery, registration, MFA, configurable token revocation, per-record authorization, multi-tenant isolation, production security assessment, or compliance controls are implemented. Public demo mode removes the authentication boundary for all application records and must never be enabled with real or private data.
 - Notifications and activity are durable, shared workspace records rather than per-user records. No real-time event delivery is claimed.
 - Chart.js and Font Awesome load from public CDNs; an internet connection is needed for those assets. If unavailable, the rest of the app still loads, but charts/icons may be absent.
 - MongoDB cannot provide an atomic transaction for patient deletion on a standalone server; the API removes associated records and the patient record as a coordinated set of operations. Use a replica set and transactions before adapting the workflow beyond this demo.

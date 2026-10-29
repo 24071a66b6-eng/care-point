@@ -63,11 +63,50 @@ test('health endpoint reports database connection state', async () => {
 });
 
 test('private endpoints require authentication and unknown API routes return JSON 404', async () => {
+  const config = await request(app).get('/api/config');
+  assert.equal(config.status, 200);
+  assert.equal(config.body.data.publicDemo, false);
   const privateResponse = await request(app).get('/api/patients');
   assert.equal(privateResponse.status, 401);
   const unknown = await request(app).get('/api/not-a-route');
   assert.equal(unknown.status, 404);
   assert.equal(unknown.body.error.code, 'NOT_FOUND');
+});
+
+test('public demo mode allows the demo role without changing the secure default', async () => {
+  process.env.PUBLIC_DEMO_MODE = 'true';
+  try {
+    const config = await request(app).get('/api/config');
+    assert.equal(config.body.data.publicDemo, true);
+
+    const list = await request(app).get('/api/patients');
+    assert.equal(list.status, 200);
+    assert.equal(list.body.pagination.total, 1);
+
+    const created = await request(app).post('/api/teams').send({
+      name: 'Public demo member',
+      specialty: 'Demonstration',
+      email: 'public-demo@example.test'
+    });
+    assert.equal(created.status, 201);
+
+    const message = await request(app).post(`/api/patients/${patient.id}/messages`).send({ text: 'Public fictional demo message' });
+    assert.equal(message.status, 201);
+    assert.equal(message.body.data.senderName, 'Public demo visitor');
+
+    const demoPatient = await Patient.create({
+      patientNumber: 'PUBLIC-DEMO-001',
+      firstName: 'Public',
+      lastName: 'Demo',
+      dateOfBirth: '1990-01-01'
+    });
+    const deleted = await request(app).delete(`/api/patients/${demoPatient.id}`);
+    assert.equal(deleted.status, 204);
+  } finally {
+    process.env.PUBLIC_DEMO_MODE = 'false';
+  }
+  const privateResponse = await request(app).get('/api/patients');
+  assert.equal(privateResponse.status, 401);
 });
 
 test('patient list supports search and missing patients return 404', async () => {

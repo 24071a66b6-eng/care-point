@@ -24,6 +24,10 @@ router.get('/health', asyncHandler(async (req, res) => {
     data: { status: healthy ? 'ok' : 'unavailable', database: healthy ? 'connected' : 'disconnected' }
   });
 }));
+router.get('/config', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ data: { publicDemo: process.env.PUBLIC_DEMO_MODE === 'true' } });
+});
 router.use('/auth', authRoutes);
 router.use((req, res, next) => {
   if (!knownRoutePaths.some((path) => req.path === path || req.path.startsWith(`${path}/`))) return next();

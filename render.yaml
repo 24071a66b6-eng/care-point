@@ -12,6 +12,8 @@ services:
         value: production
       - key: JWT_EXPIRES_IN
         value: 8h
+      - key: PUBLIC_DEMO_MODE
+        value: false
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET

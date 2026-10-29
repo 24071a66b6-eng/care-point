@@ -26,7 +26,7 @@ router.get('/teams', [query('page').optional().isInt({ min: 1 }), query('limit')
   res.json(pageResult(data, total, page, limit));
 }));
 
-router.post('/teams', requireRole('admin'), [...fields, validateRequest], asyncHandler(async (req, res) => {
+router.post('/teams', requireRole('admin', 'demo'), [...fields, validateRequest], asyncHandler(async (req, res) => {
   const data = await TeamMember.create(req.body);
   res.status(201).json({ data });
 }));
@@ -36,7 +36,7 @@ router.get('/teams/:id', [param('id').isMongoId(), validateRequest], asyncHandle
 }));
 
 router.patch('/teams/:id', [
-  requireRole('admin'),
+  requireRole('admin', 'demo'),
   param('id').isMongoId(),
   body('name').optional().isString().trim().isLength({ min: 1, max: 100 }),
   body('specialty').optional().isString().trim().isLength({ min: 1, max: 100 }),
@@ -52,7 +52,7 @@ router.patch('/teams/:id', [
   res.json({ data });
 }));
 
-router.delete('/teams/:id', requireRole('admin'), [param('id').isMongoId(), validateRequest], asyncHandler(async (req, res) => {
+router.delete('/teams/:id', requireRole('admin', 'demo'), [param('id').isMongoId(), validateRequest], asyncHandler(async (req, res) => {
   const member = await requireRecord(TeamMember, req.params.id, 'Team member');
   const assignments = await Appointment.countDocuments({ teamMember: member._id, status: { $in: ['Scheduled', 'Checked in'] } });
   if (assignments) throw new HttpError(409, 'TEAM_MEMBER_ASSIGNED', 'Reassign or cancel this member’s scheduled appointments first.');

@@ -53,6 +53,9 @@ a { color: inherit; }
 .user-mini strong { font-size: 12px; }
 .user-mini small { color: var(--muted); margin-top: 3px; font-size: 10px; }
 .user-mini button { margin-left: auto; border: 0; background: none; color: var(--muted); padding: 8px; }
+.public-demo-user button { display: none; }
+.public-demo-banner { margin: 14px clamp(18px, 3vw, 46px) 0; padding: 12px 15px; border: 1px solid #f0d7a8; border-radius: 12px; background: #fff8e9; color: #80602d; font-size: 11px; line-height: 1.5; }
+.public-demo-banner strong { margin-right: 4px; }
 .main { min-width: 0; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 86px; padding: 18px clamp(20px, 3vw, 46px); background: rgba(255,255,255,.82); border-bottom: 1px solid var(--line); }
 .topbar h1 { margin: 0; font: 700 21px 'Manrope', sans-serif; letter-spacing: -.5px; }
@@ -208,6 +211,7 @@ td strong { color: var(--ink); font-size: 11px; }
   .topbar .subtitle, .date-label { display: none; }
   .top-actions { gap: 7px; }
   .content { padding: 20px 14px 34px; }
+  .public-demo-banner { margin: 12px 14px 0; }
   .welcome-row { align-items: flex-start; flex-direction: column; }
   .welcome-row h2, .toolbar h2 { font-size: 19px; }
   .stats-grid { gap: 9px; }
