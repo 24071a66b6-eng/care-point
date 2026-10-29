@@ -2,6 +2,8 @@
 
 CarePoint is a responsive, full-stack dashboard for demonstrating fictional patient profiles, appointments, health measurements, laboratory results, care-team records, and patient-specific message threads. It uses plain HTML, CSS, and vanilla JavaScript in the browser, with an Express REST API and MongoDB persistence.
 
+**Live demo:** [https://care-point-4mln.onrender.com](https://care-point-4mln.onrender.com)
+
 > **Demonstration software only.** All seeded people, messages, appointments, and measurements are fictional. This application is not a certified medical system and must not be used for real patient care or real patient information. It is not HIPAA-compliant.
 
 ## Features
