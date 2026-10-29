@@ -156,7 +156,7 @@ The API tests use an isolated in-memory MongoDB instance, not a configured produ
 2. Push this project to a private or public Git repository. Do not include `.env`.
 3. In Render, choose **New → Blueprint**, connect the repository, and let Render read [`render.yaml`](./render.yaml). The blueprint creates the `care-point` web service, installs with `npm ci`, starts with `npm start`, and uses `/api/health` for health checks. Alternatively, create a Web Service manually with those build/start/health-check settings.
 4. In the Render service's Environment settings, supply `MONGODB_URI`, `INITIAL_ADMIN_EMAIL`, and `INITIAL_ADMIN_PASSWORD`. Render generates `JWT_SECRET` from the Blueprint. Do not paste credentials into source files or commit them. The hosting platform provides `PORT`.
-5. After setting environment values, open the Render Shell and run `npm run seed` once to create the fictional demo records and administrator account. The seeder resets the configured admin password to `INITIAL_ADMIN_PASSWORD` each time it runs.
+5. Before using the deployed app, seed Atlas from your local machine: copy `.env.example` to `.env`, set `MONGODB_URI` to the same Atlas database URI, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` to the values configured in Render, then run `npm run seed`. The seeder resets the configured admin password and replaces its named demo records each time it runs. Keep `.env` local and uncommitted.
 6. Confirm `/api/health` returns HTTP 200 and `{"data":{"status":"ok","database":"connected"}}`, then verify sign-in and core workflows. Never enter real patient information.
 
 The GitHub Actions workflow runs syntax checks and the API test suite on pushes to `main` and pull requests.
